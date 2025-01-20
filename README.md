@@ -93,8 +93,61 @@ conda env create -f environment.yml
 
 ## License
 
-[Your chosen license]
+MIT License
+
+Copyright (c) 2024 Vinoth Rajalingam
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ## Contributing
 
-[Your contribution guidelines] 
+We welcome contributions to improve the LangGraph Chatbot! Here's how you can help:
+
+### Ways to Contribute
+
+1. **Bug Reports**: Open an issue describing the bug and how to reproduce it
+2. **Feature Requests**: Submit an issue with a detailed description of your proposed feature
+3. **Code Contributions**: Submit pull requests with bug fixes or new features
+
+### Development Process
+
+1. Fork the repository
+2. Create a new branch for your feature/fix: `git checkout -b feature-name`
+3. Make your changes
+4. Write or update tests if necessary
+5. Run tests and ensure they pass
+6. Commit your changes: `git commit -m "Description of changes"`
+7. Push to your fork: `git push origin feature-name`
+8. Submit a Pull Request
+
+### Code Style Guidelines
+
+- Follow PEP 8 style guide for Python code
+- Write clear, descriptive commit messages
+- Include comments and documentation for new features
+- Update README if necessary
+
+### Getting Help
+
+If you need help with your contribution:
+1. Check existing issues and documentation
+2. Open a new issue with your question
+3. Tag it with "question" or "help wanted"
+
+Thank you for contributing to make this project better! 
