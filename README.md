@@ -150,4 +150,28 @@ If you need help with your contribution:
 2. Open a new issue with your question
 3. Tag it with "question" or "help wanted"
 
-Thank you for contributing to make this project better! 
+Thank you for contributing to make this project better!
+
+## Documentation Links
+
+### Core Technologies
+- [LangGraph Documentation](https://python.langchain.com/docs/langgraph) - Graph-based orchestration framework
+- [LangChain Documentation](https://python.langchain.com/docs/get_started/introduction) - LLM application framework
+- [Chainlit Documentation](https://docs.chainlit.io) - Chat interface framework
+
+### Language Models & APIs
+- [Claude 3.5 Documentation](https://docs.anthropic.com/claude/docs) - Anthropic's Claude API
+- [Tavily Search API Documentation](https://docs.tavily.com/) - Web search capabilities
+
+### Environment & Package Management
+- [Conda Documentation](https://docs.conda.io/en/latest/) - Environment management
+- [Python dotenv Documentation](https://github.com/theskumar/python-dotenv#readme) - Environment variable management
+
+### Development Tools
+- [PEP 8 Style Guide](https://peps.python.org/pep-0008/) - Python code style guide
+- [Git Documentation](https://git-scm.com/doc) - Version control system
+
+### Additional Resources
+- [LangChain Anthropic Integration](https://python.langchain.com/docs/integrations/llms/anthropic) - Using Claude with LangChain
+- [LangChain Tools Guide](https://python.langchain.com/docs/modules/agents/tools/) - Working with tools in LangChain
+- [Chainlit Elements](https://docs.chainlit.io/concepts/elements) - UI components for chat interface 
