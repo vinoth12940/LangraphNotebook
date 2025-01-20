@@ -1,0 +1,15 @@
+name: langraph-chatbot
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+    - langgraph
+    - langchain-anthropic
+    - langchain-community
+    - langchain-core
+    - chainlit
+    - python-dotenv
+    - typing-extensions 
