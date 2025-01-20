@@ -1,18 +1,19 @@
 # Core dependencies
-langchain-core
-langchain-anthropic
-langchain-community
-langgraph
-langsmith
+langchain-core==0.3.29
+langchain-anthropic==0.1.4
+langchain-community==0.3.14
+langgraph==0.0.27
+langchain==0.3.14
 
 # UI and Interface
-streamlit==1.32.0
-
-# Type hints and annotations
-typing-extensions==4.10.0
+chainlit==1.0.200
 
 # API Tools
-tavily-python
+tavily-python==0.3.1
 
-# Optional but recommended for better performance
-python-dotenv
+# Utilities
+python-dotenv==1.0.1
+typing-extensions==4.10.0
+
+# Optional dependencies
+langchain-experimental==0.3.4
