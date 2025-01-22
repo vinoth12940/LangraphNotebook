@@ -11,9 +11,17 @@ import requests
 from sqlalchemy import create_engine
 from sqlalchemy.pool import StaticPool
 from dotenv import load_dotenv
+from langsmith import Client
 
 # Load environment variables
 load_dotenv()
+
+# Initialize LangSmith client
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_PROJECT"] = "sql-agent-app"  # Your project name
+
+# If you have a LangSmith API key, uncomment and add it to your .env file
+# os.environ["LANGSMITH_API_KEY"] = os.getenv("LANGSMITH_API_KEY")
 
 # Function to initialize the Chinook database
 def get_engine_for_chinook_db():
