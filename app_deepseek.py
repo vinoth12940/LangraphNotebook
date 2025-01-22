@@ -12,13 +12,23 @@ from typing_extensions import TypedDict
 import chainlit as cl
 from dotenv import load_dotenv
 from openai import OpenAI  # Use the OpenAI client for DeepSeek
+from langsmith import Client
 
 # Load environment variables
 load_dotenv()
 
 # Access API keys from environment variables
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")  # Add DeepSeek API key to .env
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+LANGCHAIN_API_KEY = os.getenv("LANGSMITH_API_KEY")
+LANGCHAIN_PROJECT = os.getenv("LANGCHAIN_PROJECT", "deepseekapi-Langraph-app")
+
+# Initialize LangSmith client
+langsmith_client = Client()
+
+# Enable tracing
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
 
 # Initialize memory for checkpointing
 memory = MemorySaver()
