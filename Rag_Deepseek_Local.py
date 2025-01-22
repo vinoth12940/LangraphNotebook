@@ -9,6 +9,8 @@ from typing import Any, List, Optional, Dict
 from openai import OpenAI
 from dotenv import load_dotenv
 from pydantic import Field, PrivateAttr
+from langsmith import traceable
+from langsmith.wrappers import wrap_openai
 
 from IPython.display import Markdown, display
 from llama_index.core import Settings
@@ -28,6 +30,10 @@ import streamlit as st
 # Load environment variables
 load_dotenv()
 
+# Initialize LangSmith
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_PROJECT"] = "deepseek-rag"  # You can change this project name
+
 if "id" not in st.session_state:
     st.session_state.id = uuid.uuid4()
     st.session_state.file_cache = {}
@@ -37,17 +43,17 @@ client = None
 
 class DeepSeekLLM(LLM):
     api_key: Optional[str] = Field(default=None, description="DeepSeek API key")
-    model: str = Field(default="deepseek-chat", description="Model name to use")
+    model: str = Field(default="deepseek-reasoner", description="Model name to use")
     temperature: float = Field(default=0.7, description="Temperature for sampling")
-    max_tokens: int = Field(default=1024, description="Maximum number of tokens to generate")
+    max_tokens: int = Field(default=4000, description="Maximum number of tokens to generate")
     
     _client: Any = PrivateAttr()
 
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "deepseek-chat",
-        temperature: float = 0.1,
+        model: str = "deepseek-reasoner",
+        temperature: float = 0.5,
         max_tokens: int = 1024,
         **kwargs: Any,
     ) -> None:
@@ -58,10 +64,11 @@ class DeepSeekLLM(LLM):
             max_tokens=max_tokens,
             **kwargs
         )
-        self._client = OpenAI(
+        base_client = OpenAI(
             api_key=self.api_key,
             base_url="https://api.deepseek.com/v1"
         )
+        self._client = wrap_openai(base_client)
 
     @property
     def metadata(self) -> LLMMetadata:
@@ -71,6 +78,7 @@ class DeepSeekLLM(LLM):
             model_name=self.model,
         )
 
+    @traceable(name="deepseek_complete")
     def complete(self, prompt: str, **kwargs: Any) -> CompletionResponse:
         messages = [
             {"role": "system", "content": "You are a helpful assistant that answers questions based on the provided context."},
@@ -87,6 +95,7 @@ class DeepSeekLLM(LLM):
         
         return CompletionResponse(text=response.choices[0].message.content)
 
+    @traceable(name="deepseek_stream_complete")
     def stream_complete(self, prompt: str, **kwargs: Any) -> CompletionResponseGen:
         messages = [
             {"role": "system", "content": "You are a helpful assistant that answers questions based on the provided context."},
@@ -110,6 +119,7 @@ class DeepSeekLLM(LLM):
         
         return gen()
 
+    @traceable(name="deepseek_chat")
     def chat(self, messages: List[ChatMessage], **kwargs: Any) -> CompletionResponse:
         formatted_messages = [
             {"role": msg.role.value, "content": msg.content}
@@ -126,6 +136,7 @@ class DeepSeekLLM(LLM):
         
         return CompletionResponse(text=response.choices[0].message.content)
 
+    @traceable(name="deepseek_stream_chat")
     def stream_chat(self, messages: List[ChatMessage], **kwargs: Any) -> CompletionResponseGen:
         formatted_messages = [
             {"role": msg.role.value, "content": msg.content}
@@ -161,16 +172,26 @@ class DeepSeekLLM(LLM):
     async def astream_chat(self, messages: List[ChatMessage], **kwargs: Any) -> CompletionResponseGen:
         raise NotImplementedError("Async methods are not implemented")
 
+class TracedHuggingFaceEmbedding(HuggingFaceEmbedding):
+    @traceable(name="embed_documents", run_type="embedding")
+    def _get_text_embedding(self, text: str) -> List[float]:
+        return super()._get_text_embedding(text)
+    
+    @traceable(name="embed_batch", run_type="embedding")
+    def _get_text_embeddings(self, texts: List[str]) -> List[List[float]]:
+        return super()._get_text_embeddings(texts)
+
 @st.cache_resource
 def load_llm():
     return DeepSeekLLM()
 
+@traceable(name="reset_chat")
 def reset_chat():
     st.session_state.messages = []
     st.session_state.context = None
     gc.collect()
 
-
+@traceable(name="display_pdf")
 def display_pdf(file):
     # Opening file from file path
 
@@ -208,36 +229,48 @@ with st.sidebar:
 
                 if file_key not in st.session_state.get('file_cache', {}):
                     try:
-                        if os.path.exists(temp_dir):
-                            loader = SimpleDirectoryReader(
-                                input_dir=temp_dir,
-                                required_exts=[".pdf"],
-                                recursive=True
-                            )
-                        else:
-                            st.error('Could not find the file you uploaded, please check again...')
-                            st.stop()
+                        @traceable(name="process_document")
+                        def process_document():
+                            if os.path.exists(temp_dir):
+                                loader = SimpleDirectoryReader(
+                                    input_dir=temp_dir,
+                                    required_exts=[".pdf"],
+                                    recursive=True
+                                )
+                            else:
+                                st.error('Could not find the file you uploaded, please check again...')
+                                st.stop()
 
-                        st.write("Loading document...")
-                        docs = loader.load_data()
-                        
-                        st.write("Setting up embedding model...")
-                        embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-large-en-v1.5", trust_remote_code=True)
-                        
-                        st.write("Setting up LLM...")
-                        llm = load_llm()
-                        
-                        st.write("Configuring settings...")
-                        Settings.embed_model = embed_model
-                        Settings.llm = llm
-                        Settings.chunk_size = 512  # Smaller chunks for better retrieval
-                        Settings.chunk_overlap = 50
-                        
-                        st.write("Creating document index...")
-                        index = VectorStoreIndex.from_documents(
-                            docs,
-                            show_progress=True
-                        )
+                            st.write("Loading document...")
+                            docs = loader.load_data()
+                            
+                            st.write("Setting up embedding model...")
+                            embed_model = TracedHuggingFaceEmbedding(
+                                model_name="BAAI/bge-large-en-v1.5",
+                                trust_remote_code=True
+                            )
+                            
+                            st.write("Setting up LLM...")
+                            llm = load_llm()
+                            
+                            st.write("Configuring settings...")
+                            Settings.embed_model = embed_model
+                            Settings.llm = llm
+                            Settings.chunk_size = 512
+                            Settings.chunk_overlap = 50
+                            
+                            st.write("Creating document index...")
+                            @traceable(name="create_index", run_type="embedding")
+                            def create_index(documents):
+                                return VectorStoreIndex.from_documents(
+                                    documents,
+                                    show_progress=True
+                                )
+                            
+                            index = create_index(docs)
+                            return index
+
+                        index = process_document()
 
                         st.write("Setting up query engine...")
                         # Custom QA prompt
@@ -318,14 +351,14 @@ if prompt := st.chat_input("What's up?"):
         full_response = ""
         
         try:
-            # Use query instead of retrieve to get the full RAG pipeline
-            response = query_engine.query(prompt)
+            @traceable(name="process_query")
+            def process_query(query_text):
+                response = query_engine.query(query_text)
+                if hasattr(response, 'response'):
+                    return response.response
+                return str(response)
             
-            if hasattr(response, 'response'):
-                full_response = response.response
-            else:
-                full_response = str(response)
-            
+            full_response = process_query(prompt)
             message_placeholder.markdown(full_response)
             
         except Exception as e:
