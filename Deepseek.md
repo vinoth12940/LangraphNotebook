@@ -269,6 +269,7 @@ except Exception as e:
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
+use venv conda env
 ```
 
 2. **Configuration**
