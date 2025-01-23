@@ -12,6 +12,8 @@ from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 import chainlit as cl
 from dotenv import load_dotenv
+from langsmith import Client
+import langsmith
 
 # Load environment variables from .env file
 load_dotenv()
@@ -19,6 +21,11 @@ load_dotenv()
 # Access API keys from environment variables
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
+LANGSMITH_API_KEY = os.getenv("LANGSMITH_API_KEY")
+
+# Configure LangSmith
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_PROJECT"] = "Chainlit-RAG-Assistant"
 
 memory = MemorySaver()
 
@@ -27,9 +34,9 @@ class State(TypedDict):
 
 graph_builder = StateGraph(State)
 
-tool = TavilySearchResults(max_results=5)
+tool = TavilySearchResults(max_results=10)
 tools = [tool]
-llm = ChatAnthropic(model="claude-3-5-sonnet-20240620")
+llm = ChatAnthropic(model="claude-3-5-haiku-20241022")
 llm_with_tools = llm.bind_tools(tools)
 
 def chatbot(state: State):
@@ -54,7 +61,15 @@ graph = graph_builder.compile(checkpointer=memory)
 async def start():
     thread_id = str(uuid.uuid4())
     cl.user_session.set("thread_id", thread_id)
-    config = {"configurable": {"thread_id": thread_id}}
+    config = {
+        "configurable": {
+            "thread_id": thread_id,
+            "metadata": {
+                "conversation_id": thread_id,
+                "client_type": "chainlit"
+            }
+        }
+    }
     checkpoint = memory.get(config)
     if checkpoint and "messages" in checkpoint:
         cl.user_session.set("messages", checkpoint["messages"])
@@ -65,7 +80,17 @@ async def start():
 @cl.on_message
 async def main(message: cl.Message):
     graph = cl.user_session.get("graph")
-    config = {"configurable": {"thread_id": cl.user_session.get("thread_id")}}
+    thread_id = cl.user_session.get("thread_id")
+    config = {
+        "configurable": {
+            "thread_id": thread_id,
+            "metadata": {
+                "conversation_id": thread_id,
+                "message_id": str(uuid.uuid4()),
+                "client_type": "chainlit"
+            }
+        }
+    }
     
     # Retrieve the existing messages from the session
     existing_messages = cl.user_session.get("messages")
